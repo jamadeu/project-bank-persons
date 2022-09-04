@@ -1,4 +1,4 @@
-package com.bank.model
+package com.bank.domain.model
 
 import com.fasterxml.jackson.annotation.JsonFormat
 import io.micronaut.data.annotation.GeneratedValue
