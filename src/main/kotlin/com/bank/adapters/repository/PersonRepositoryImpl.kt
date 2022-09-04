@@ -9,8 +9,8 @@ import org.bson.types.ObjectId
 class PersonRepositoryImpl(
     private val repository: MicronautDataRepository
 ) : PersonRepository {
-    override fun findById(id: ObjectId): Person? {
-        return repository.findById(id).orElse(null)
+    override fun findById(id: String): Person? {
+        return repository.findById(ObjectId(id)).orElse(null)
     }
 
     override fun save(person: Person): Person {
@@ -21,8 +21,8 @@ class PersonRepositoryImpl(
         return repository.save(person)
     }
 
-    override fun deleteById(id: ObjectId) {
-        repository.deleteById(id)
+    override fun deleteById(id: String) {
+        repository.deleteById(ObjectId(id))
     }
 
 }

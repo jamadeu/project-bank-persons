@@ -5,7 +5,6 @@ import io.micronaut.data.annotation.GeneratedValue
 import io.micronaut.data.annotation.Id
 import io.micronaut.data.annotation.MappedEntity
 import org.bson.types.ObjectId
-import java.time.DateTimeException
 import java.time.LocalDate
 
 @MappedEntity
