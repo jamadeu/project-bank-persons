@@ -61,4 +61,12 @@ class PersonsController(
         logger.info("PersonsController - update, person updated")
         return HttpResponse.noContent()
     }
+
+    @Delete("/{id}")
+    fun delete(id: String): HttpResponse<Unit> {
+        logger.info("PersonsController - delete, id - $id")
+        personService.deleteById(id)
+        logger.info("PersonsController - delete, OK")
+        return HttpResponse.ok()
+    }
 }
