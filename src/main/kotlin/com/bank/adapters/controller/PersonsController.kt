@@ -1,6 +1,7 @@
 package com.bank.adapters.controller
 
 import com.bank.adapters.controller.dto.CreatePersonRequest
+import com.bank.adapters.controller.dto.FindPersonByCpfResponse
 import com.bank.adapters.controller.dto.FindPersonByIdResponse
 import com.bank.domain.service.PersonService
 import io.micronaut.http.HttpResponse
@@ -33,6 +34,20 @@ class PersonsController(
             HttpResponse.notFound()
         }
     }
+
+    @Get("/cpf/{cpf}")
+    fun findByCpf(cpf: String): HttpResponse<Any> {
+        logger.info("PersonsController - findByCpf, cpf - $cpf")
+        val foundedPerson = personService.findByCpf(cpf)
+        return if (foundedPerson != null) {
+            logger.info("PersonsController - findByCpf, OK")
+            HttpResponse.ok(FindPersonByCpfResponse.fromEntity(foundedPerson))
+        } else {
+            logger.info("PersonsController - findByCpf, Not Found")
+            HttpResponse.notFound()
+        }
+    }
+
 
     @Post
     fun create(@Body @Valid request: CreatePersonRequest): HttpResponse<URI> {
