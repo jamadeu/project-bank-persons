@@ -18,7 +18,7 @@ class PersonRepositoryImpl(
     }
 
     override fun update(person: Person): Person {
-        return repository.save(person)
+        return repository.update(person)
     }
 
     override fun deleteById(id: String) {

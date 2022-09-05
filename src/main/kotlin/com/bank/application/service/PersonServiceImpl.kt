@@ -1,5 +1,6 @@
 package com.bank.application.service
 
+import com.bank.domain.exception.CpfCantBeChangedException
 import com.bank.domain.exception.InvalidCpfException
 import com.bank.domain.exception.PersonAlreadyExistsException
 import com.bank.domain.exception.PersonNotFoundException
@@ -42,7 +43,12 @@ class PersonServiceImpl(private val personRepository: PersonRepository) : Person
     }
 
     override fun update(person: Person): Person {
-        return personRepository.save(person)
+        logger.info("PersonServiceImpl - update, person $person")
+        this.findById(person.id.toString()).also { p ->
+            logger.error("PersonServiceImpl - update, cpf cannot be changed")
+            if (p.cpf != person.cpf) throw CpfCantBeChangedException("Cpf cannot be changed")
+        }
+        return personRepository.update(person)
     }
 
     override fun deleteById(id: String) {

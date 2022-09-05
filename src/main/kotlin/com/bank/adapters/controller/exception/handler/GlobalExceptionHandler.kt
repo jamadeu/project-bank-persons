@@ -1,5 +1,6 @@
 package com.bank.adapters.controller.exception.handler
 
+import com.bank.domain.exception.CpfCantBeChangedException
 import com.bank.domain.exception.InvalidCpfException
 import com.bank.domain.exception.PersonAlreadyExistsException
 import com.bank.domain.exception.PersonNotFoundException
@@ -22,6 +23,7 @@ class GlobalExceptionHandler(
             is PersonNotFoundException -> HttpResponse.notFound(ErrorBody.errorBody(exception.message, 404))
             is PersonAlreadyExistsException -> HttpResponse.badRequest(ErrorBody.errorBody(exception.message, 400))
             is InvalidCpfException -> HttpResponse.badRequest(ErrorBody.errorBody(exception.message, 400))
+            is CpfCantBeChangedException -> HttpResponse.badRequest(ErrorBody.errorBody(exception.message, 400))
             else -> HttpResponse.serverError(ErrorBody.errorBody(exception?.message, 500))
         }
     }

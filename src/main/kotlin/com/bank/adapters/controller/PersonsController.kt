@@ -3,12 +3,10 @@ package com.bank.adapters.controller
 import com.bank.adapters.controller.dto.CreatePersonRequest
 import com.bank.adapters.controller.dto.FindPersonByCpfResponse
 import com.bank.adapters.controller.dto.FindPersonByIdResponse
+import com.bank.adapters.controller.dto.UpdatePersonRequest
 import com.bank.domain.service.PersonService
 import io.micronaut.http.HttpResponse
-import io.micronaut.http.annotation.Body
-import io.micronaut.http.annotation.Controller
-import io.micronaut.http.annotation.Get
-import io.micronaut.http.annotation.Post
+import io.micronaut.http.annotation.*
 import io.micronaut.validation.Validated
 import org.slf4j.LoggerFactory
 import java.net.URI
@@ -48,12 +46,19 @@ class PersonsController(
         }
     }
 
-
     @Post
     fun create(@Body @Valid request: CreatePersonRequest): HttpResponse<URI> {
         logger.info("PersonsController - create, request - $request")
         val createdPerson = personService.save(request.toModel())
         logger.info("PersonsController - create, person created - ${createdPerson.id}")
         return HttpResponse.created(URI.create(createdPerson.id.toString()))
+    }
+
+    @Put
+    fun update(@Body @Valid request: UpdatePersonRequest): HttpResponse<Unit> {
+        logger.info("PersonsController - update, request - $request")
+        personService.update(request.toModel())
+        logger.info("PersonsController - update, person updated")
+        return HttpResponse.noContent()
     }
 }
