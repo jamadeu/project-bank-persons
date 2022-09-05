@@ -11,4 +11,6 @@ interface PersonRepository {
     fun update(person: Person): Person
 
     fun deleteById(id: String)
+
+    fun findByCpf(cpf: String): Person?
 }

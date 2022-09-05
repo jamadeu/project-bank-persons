@@ -25,4 +25,8 @@ class PersonRepositoryImpl(
         repository.deleteById(ObjectId(id))
     }
 
+    override fun findByCpf(cpf: String): Person? {
+        return repository.findByCpf(cpf)
+    }
+
 }
