@@ -18,7 +18,6 @@ import org.testcontainers.junit.jupiter.Container
 import org.testcontainers.junit.jupiter.Testcontainers
 import org.testcontainers.utility.DockerImageName
 import java.util.*
-import kotlin.reflect.jvm.internal.impl.load.kotlin.JvmType
 
 @Testcontainers
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
@@ -39,10 +38,11 @@ internal class PersonsControllerTest : TestPropertyProvider {
 
     @BeforeEach
     fun setup() {
+
         micronautDataRepository.deleteAll()
     }
 
-    @AfterAll
+    @AfterEach
     fun cleanUp() {
         mongoDBContainer.close()
     }
@@ -74,7 +74,7 @@ internal class PersonsControllerTest : TestPropertyProvider {
 
         assert(HttpStatus.OK == response.status)
         assert(response.body.isPresent)
-        with(response.body.get()){
+        with(response.body.get()) {
             assert(this.id == id)
             assert(this.name == person.name)
             assert(this.cpf == person.cpf)
@@ -105,5 +105,4 @@ internal class PersonsControllerTest : TestPropertyProvider {
     override fun getProperties(): MutableMap<String, String> {
         return Collections.singletonMap("mongodb.uri", mongoDBContainer.replicaSetUrl)
     }
-
 }
