@@ -21,29 +21,15 @@ class PersonsController(
     private val logger = LoggerFactory.getLogger(javaClass)
 
     @Get("/{id}")
-    fun findById(id: String): HttpResponse<Any> {
+    fun findById(id: String): HttpResponse<FindPersonByIdResponse> {
         logger.info("PersonsController - findById, id - $id")
-        val foundedPerson = personService.findById(id)
-        return if (foundedPerson != null) {
-            logger.info("PersonsController - findById, OK")
-            HttpResponse.ok(FindPersonByIdResponse.fromEntity(foundedPerson))
-        } else {
-            logger.info("PersonsController - findById, Not Found")
-            HttpResponse.notFound()
-        }
+        return HttpResponse.ok(FindPersonByIdResponse.fromEntity(personService.findById(id)))
     }
 
     @Get("/cpf/{cpf}")
-    fun findByCpf(cpf: String): HttpResponse<Any> {
+    fun findByCpf(cpf: String): HttpResponse<FindPersonByCpfResponse> {
         logger.info("PersonsController - findByCpf, cpf - $cpf")
-        val foundedPerson = personService.findByCpf(cpf)
-        return if (foundedPerson != null) {
-            logger.info("PersonsController - findByCpf, OK")
-            HttpResponse.ok(FindPersonByCpfResponse.fromEntity(foundedPerson))
-        } else {
-            logger.info("PersonsController - findByCpf, Not Found")
-            HttpResponse.notFound()
-        }
+        return HttpResponse.ok(FindPersonByCpfResponse.fromEntity(personService.findByCpf(cpf)))
     }
 
     @Post

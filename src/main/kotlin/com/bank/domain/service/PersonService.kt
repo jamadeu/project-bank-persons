@@ -3,9 +3,9 @@ package com.bank.domain.service
 import com.bank.domain.model.Person
 
 interface PersonService {
-    fun findById(id: String): Person?
+    fun findById(id: String): Person
 
-    fun findByCpf(cpf: String): Person?
+    fun findByCpf(cpf: String): Person
 
     fun save(person: Person): Person
 

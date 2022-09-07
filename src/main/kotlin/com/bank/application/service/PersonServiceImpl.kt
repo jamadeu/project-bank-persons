@@ -21,8 +21,12 @@ class PersonServiceImpl(private val personRepository: PersonRepository) : Person
         return personRepository.findById(id) ?: throw PersonNotFoundException("Person with id $id not found")
     }
 
-    override fun findByCpf(cpf: String): Person? {
+    override fun findByCpf(cpf: String): Person {
         logger.info("PersonServiceImpl - findByCpf")
+        if (!isCPF(cpf)) {
+            logger.error("PersonServiceImpl - save, invalid cpf - $cpf")
+            throw InvalidCpfException("Cpf is invalid")
+        }
         return personRepository.findByCpf(cpf) ?: throw PersonNotFoundException("Person with cpf $cpf not found")
     }
 

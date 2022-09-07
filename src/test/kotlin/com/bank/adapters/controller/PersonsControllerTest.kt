@@ -1,6 +1,7 @@
 package com.bank.adapters.controller
 
 import com.bank.adapters.controller.dto.CreatePersonRequest
+import com.bank.adapters.controller.dto.FindPersonByCpfResponse
 import com.bank.adapters.controller.dto.FindPersonByIdResponse
 import com.bank.adapters.repository.MicronautDataRepository
 import com.bank.domain.model.Person
@@ -68,6 +69,59 @@ internal class PersonsControllerTest : TestPropertyProvider {
         val id = getSavedPersonId(person)
         val response = client.toBlocking().exchange<Unit, FindPersonByIdResponse>(
             HttpRequest.GET("/persons/$id"), FindPersonByIdResponse::class.java
+        )
+
+        assert(HttpStatus.OK == response.status)
+        assert(response.body.isPresent)
+        with(response.body.get()) {
+            assert(this.id == id)
+            assert(this.name == person.name)
+            assert(this.cpf == person.cpf)
+            assert(this.address == person.address)
+        }
+        assert(micronautDataRepository.findAll().count() == 1)
+    }
+
+    @Test
+    fun `findByCpf must return not found when person does not exists`() {
+        val cpf = "691.801.660-16"
+        client.toBlocking().run {
+            assertThrows<HttpClientResponseException> {
+                exchange<Unit, String>(
+                    HttpRequest.GET<Unit?>("/persons/cpf/$cpf")
+                ).also {
+                    assert(HttpStatus.NOT_FOUND == it.status)
+                    assert(it.body() != null)
+                    assert(it.body()!!.contains("Person with cpf $cpf not found"))
+                }
+            }
+        }
+        assert(micronautDataRepository.findAll().none())
+    }
+
+    @Test
+    fun `findByCpf must return bad request when cpf is invalid`() {
+        val cpf = "111.111.111-11"
+        client.toBlocking().run {
+            assertThrows<HttpClientResponseException> {
+                exchange<Unit, String>(
+                    HttpRequest.GET<Unit?>("/persons/cpf/$cpf")
+                ).also {
+                    assert(HttpStatus.BAD_REQUEST == it.status)
+                    assert(it.body() != null)
+                    assert(it.body()!!.contains("Cpf is invalid"))
+                }
+            }
+        }
+        assert(micronautDataRepository.findAll().none())
+    }
+
+    @Test
+    fun `findByCpf must return a person when success`() {
+        val person = getPerson()
+        getSavedPersonId(person)
+        val response = client.toBlocking().exchange<Unit, FindPersonByCpfResponse>(
+            HttpRequest.GET("/persons/cpf/${person.cpf}"), FindPersonByCpfResponse::class.java
         )
 
         assert(HttpStatus.OK == response.status)
