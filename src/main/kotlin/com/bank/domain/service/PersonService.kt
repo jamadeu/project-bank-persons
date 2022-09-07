@@ -7,7 +7,7 @@ interface PersonService {
 
     fun findByCpf(cpf: String): Person
 
-    fun save(person: Person): Person
+    fun create(person: Person): Person
 
     fun update(person: Person): Person
 

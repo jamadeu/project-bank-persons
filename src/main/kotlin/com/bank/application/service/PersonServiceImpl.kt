@@ -30,7 +30,7 @@ class PersonServiceImpl(private val personRepository: PersonRepository) : Person
         return personRepository.findByCpf(cpf) ?: throw PersonNotFoundException("Person with cpf $cpf not found")
     }
 
-    override fun save(person: Person): Person {
+    override fun create(person: Person): Person {
         logger.info("PersonServiceImpl - save, person $person")
         if (!isCPF(person.cpf)) {
             logger.error("PersonServiceImpl - save, invalid cpf - ${person.cpf}")

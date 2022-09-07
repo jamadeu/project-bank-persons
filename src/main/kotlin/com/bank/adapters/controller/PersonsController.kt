@@ -35,7 +35,7 @@ class PersonsController(
     @Post
     fun create(@Body @Valid request: CreatePersonRequest): HttpResponse<URI> {
         logger.info("PersonsController - create, request - $request")
-        val createdPerson = personService.save(request.toModel())
+        val createdPerson = personService.create(request.toModel())
         logger.info("PersonsController - create, person created - ${createdPerson.id}")
         return HttpResponse.created(URI.create(createdPerson.id.toString()))
     }

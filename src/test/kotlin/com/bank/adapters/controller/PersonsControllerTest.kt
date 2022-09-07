@@ -13,7 +13,12 @@ import io.micronaut.http.client.exceptions.HttpClientResponseException
 import io.micronaut.test.extensions.junit5.annotation.MicronautTest
 import io.micronaut.test.support.TestPropertyProvider
 import jakarta.inject.Inject
+import org.bson.types.ObjectId
 import org.junit.jupiter.api.*
+import org.junit.jupiter.params.ParameterizedTest
+import org.junit.jupiter.params.provider.EmptySource
+import org.junit.jupiter.params.provider.NullSource
+import org.junit.jupiter.params.provider.ValueSource
 import org.testcontainers.containers.MongoDBContainer
 import org.testcontainers.junit.jupiter.Testcontainers
 import org.testcontainers.utility.DockerImageName
@@ -66,6 +71,7 @@ internal class PersonsControllerTest : TestPropertyProvider {
     @Test
     fun `findById must return a person when success`() {
         val person = getPerson()
+        createPerson(person)
         val id = getSavedPersonId(person)
         val response = client.toBlocking().exchange<Unit, FindPersonByIdResponse>(
             HttpRequest.GET("/persons/$id"), FindPersonByIdResponse::class.java
@@ -119,6 +125,7 @@ internal class PersonsControllerTest : TestPropertyProvider {
     @Test
     fun `findByCpf must return a person when success`() {
         val person = getPerson()
+        createPerson(person)
         getSavedPersonId(person)
         val response = client.toBlocking().exchange<Unit, FindPersonByCpfResponse>(
             HttpRequest.GET("/persons/cpf/${person.cpf}"), FindPersonByCpfResponse::class.java
@@ -135,18 +142,126 @@ internal class PersonsControllerTest : TestPropertyProvider {
         assert(micronautDataRepository.findAll().count() == 1)
     }
 
-    private fun getSavedPersonId(personToCreate: Person): String {
+    @Test
+    fun `create must return created when successful`() {
+        val personToCreate = getPerson()
         val createPersonRequest = CreatePersonRequest(
             name = personToCreate.name,
             cpf = personToCreate.cpf,
             address = personToCreate.address
         )
-        return client
+        val response = client
             .toBlocking()
             .exchange<CreatePersonRequest, String>(
                 HttpRequest.POST("/persons", createPersonRequest)
-            ).header("location")!!
+            )
+
+        assert(response.status == HttpStatus.CREATED)
+        val personId = response.header("location")
+        assert(personId != null)
+        val createdPerson =
+            micronautDataRepository
+                .findById(ObjectId(personId))
+                .run {
+                    assert(this.isPresent)
+                    this.get()
+                }
+        assert(createdPerson.cpf == personToCreate.cpf)
+        assert(createdPerson.name == personToCreate.name)
+        assert(createdPerson.address == personToCreate.address)
     }
+
+    @Test
+    fun `create must return bad request when person already exists`() {
+        val personToCreate = getPerson()
+        createPerson(personToCreate)
+        val createPersonRequest = CreatePersonRequest(
+            name = personToCreate.name,
+            cpf = personToCreate.cpf,
+            address = personToCreate.address
+        )
+        client.toBlocking().run {
+            assertThrows<HttpClientResponseException> {
+                exchange<CreatePersonRequest, String>(
+                    HttpRequest.POST("/persons", createPersonRequest)
+                ).also {
+                    assert(HttpStatus.BAD_REQUEST == it.status)
+                    assert(it.body() != null)
+                    assert(it.body()!!.contains("Person with cpf ${personToCreate.cpf} already exists"))
+                }
+            }
+        }
+        assert(micronautDataRepository.findAll().count() == 1)
+    }
+
+    @ParameterizedTest
+    @NullSource
+    @EmptySource
+    fun `create must return bad request when name is null or blank`(name: String?) {
+        val personToCreate = getPerson()
+        val createPersonRequest = CreatePersonRequest(
+            name = name,
+            cpf = personToCreate.cpf,
+            address = personToCreate.address
+        )
+        client.toBlocking().run {
+            assertThrows<HttpClientResponseException> {
+                exchange<CreatePersonRequest, String>(
+                    HttpRequest.POST("/persons", createPersonRequest)
+                ).also {
+                    assert(HttpStatus.BAD_REQUEST == it.status)
+                }
+            }
+        }
+        assert(micronautDataRepository.findAll().none())
+    }
+
+    @ParameterizedTest
+    @NullSource
+    @EmptySource
+    fun `create must return bad request when address is null or blank`(address: String?) {
+        val personToCreate = getPerson()
+        val createPersonRequest = CreatePersonRequest(
+            name = personToCreate.name,
+            cpf = personToCreate.cpf,
+            address = address
+        )
+        client.toBlocking().run {
+            assertThrows<HttpClientResponseException> {
+                exchange<CreatePersonRequest, String>(
+                    HttpRequest.POST("/persons", createPersonRequest)
+                ).also {
+                    assert(HttpStatus.BAD_REQUEST == it.status)
+                }
+            }
+        }
+        assert(micronautDataRepository.findAll().none())
+    }
+
+    @ParameterizedTest
+    @NullSource
+    @EmptySource
+    @ValueSource(strings = ["111.111.111-11"])
+    fun `create must return bad request when cpf is null or blank`(cpf: String?) {
+        val personToCreate = getPerson()
+        val createPersonRequest = CreatePersonRequest(
+            name = personToCreate.name,
+            cpf = cpf,
+            address = personToCreate.address
+        )
+        client.toBlocking().run {
+            assertThrows<HttpClientResponseException> {
+                exchange<CreatePersonRequest, String>(
+                    HttpRequest.POST("/persons", createPersonRequest)
+                ).also {
+                    assert(HttpStatus.BAD_REQUEST == it.status)
+                }
+            }
+        }
+        assert(micronautDataRepository.findAll().none())
+    }
+
+    private fun getSavedPersonId(person: Person) = micronautDataRepository.findByCpf(person.cpf)!!.id.toString()
 
     private fun getPerson(
         name: String = "Test",
@@ -154,7 +269,22 @@ internal class PersonsControllerTest : TestPropertyProvider {
         address: String = "Adrress"
     ) = Person(name, cpf, address)
 
+    private fun createPerson(personToCreate: Person) {
+        val createPersonRequest = CreatePersonRequest(
+            name = personToCreate.name,
+            cpf = personToCreate.cpf,
+            address = personToCreate.address
+        )
+        client
+            .toBlocking()
+            .exchange<CreatePersonRequest, String>(
+                HttpRequest.POST("/persons", createPersonRequest)
+            )
+    }
+
     override fun getProperties(): MutableMap<String, String> {
         return Collections.singletonMap("mongodb.uri", mongoDBContainer.replicaSetUrl)
     }
+
+
 }
