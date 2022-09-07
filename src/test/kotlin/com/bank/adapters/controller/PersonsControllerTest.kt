@@ -14,10 +14,10 @@ import io.micronaut.test.support.TestPropertyProvider
 import jakarta.inject.Inject
 import org.junit.jupiter.api.*
 import org.testcontainers.containers.MongoDBContainer
-import org.testcontainers.junit.jupiter.Container
 import org.testcontainers.junit.jupiter.Testcontainers
 import org.testcontainers.utility.DockerImageName
 import java.util.*
+
 
 @Testcontainers
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
@@ -31,25 +31,23 @@ internal class PersonsControllerTest : TestPropertyProvider {
     @field:Client("/")
     lateinit var client: HttpClient
 
-    @Container
     private val mongoDBContainer: MongoDBContainer =
         MongoDBContainer(DockerImageName.parse("mongo:4.0.10"))
             .apply { start() }
 
     @BeforeEach
     fun setup() {
-
         micronautDataRepository.deleteAll()
     }
 
-    @AfterEach
-    fun cleanUp() {
+    @AfterAll
+    fun close() {
         mongoDBContainer.close()
     }
 
     @Test
     fun `findById must return not found when person does not exists`() {
-        val id = 1
+        val id = "63189af4e1a7f0759d06aa8b"
         client.toBlocking().run {
             assertThrows<HttpClientResponseException> {
                 exchange<Unit, String>(
@@ -61,7 +59,7 @@ internal class PersonsControllerTest : TestPropertyProvider {
                 }
             }
         }
-        assert(micronautDataRepository.findAll().count() == 0)
+        assert(micronautDataRepository.findAll().none())
     }
 
     @Test
