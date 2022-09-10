@@ -548,6 +548,43 @@ internal class PersonsControllerTest : TestPropertyProvider {
         assert(updatedPerson.updatedAt == person.updatedAt)
     }
 
+    @Test
+    fun `delete must return no content when successful`() {
+        val personToCreate = getPerson()
+        createPerson(personToCreate)
+        val person = micronautDataRepository.findByCpf(personToCreate.cpf)!!
+
+        client.toBlocking()
+            .exchange<Unit, String>(
+                HttpRequest.DELETE("/persons/${person.id}")
+            ).also {
+                assert(HttpStatus.OK == it.status)
+            }
+
+        client.toBlocking().run {
+            assertThrows<HttpClientResponseException> {
+                exchange<Unit, String>(
+                    HttpRequest.GET<Unit?>("/persons/${person.id}")
+                ).also {
+                    assert(HttpStatus.NOT_FOUND == it.status)
+                    assert(it.body() != null)
+                    assert(it.body()!!.contains("Person with id ${person.id} not found"))
+                }
+            }
+        }
+    }
+
+    @Test
+    fun `delete must return no content when person does not exists`() {
+        val id = "63189af4e1a7f0759d06aa8b"
+        client.toBlocking()
+            .exchange<Unit, String>(
+                HttpRequest.DELETE("/persons/$id")
+            ).also {
+                assert(HttpStatus.OK == it.status)
+            }
+    }
+
     private fun getSavedPersonId(person: Person) = micronautDataRepository.findByCpf(person.cpf)!!.id.toString()
 
     private fun getPerson(
