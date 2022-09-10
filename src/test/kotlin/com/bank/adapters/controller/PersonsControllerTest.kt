@@ -3,6 +3,7 @@ package com.bank.adapters.controller
 import com.bank.adapters.controller.dto.CreatePersonRequest
 import com.bank.adapters.controller.dto.FindPersonByCpfResponse
 import com.bank.adapters.controller.dto.FindPersonByIdResponse
+import com.bank.adapters.controller.dto.UpdatePersonRequest
 import com.bank.adapters.repository.MicronautDataRepository
 import com.bank.domain.model.Person
 import io.micronaut.http.HttpRequest
@@ -22,6 +23,7 @@ import org.junit.jupiter.params.provider.ValueSource
 import org.testcontainers.containers.MongoDBContainer
 import org.testcontainers.junit.jupiter.Testcontainers
 import org.testcontainers.utility.DockerImageName
+import java.time.LocalDate
 import java.util.*
 
 
@@ -65,7 +67,6 @@ internal class PersonsControllerTest : TestPropertyProvider {
                 }
             }
         }
-        assert(micronautDataRepository.findAll().none())
     }
 
     @Test
@@ -85,7 +86,6 @@ internal class PersonsControllerTest : TestPropertyProvider {
             assert(this.cpf == person.cpf)
             assert(this.address == person.address)
         }
-        assert(micronautDataRepository.findAll().count() == 1)
     }
 
     @Test
@@ -102,7 +102,6 @@ internal class PersonsControllerTest : TestPropertyProvider {
                 }
             }
         }
-        assert(micronautDataRepository.findAll().none())
     }
 
     @Test
@@ -119,7 +118,6 @@ internal class PersonsControllerTest : TestPropertyProvider {
                 }
             }
         }
-        assert(micronautDataRepository.findAll().none())
     }
 
     @Test
@@ -139,7 +137,6 @@ internal class PersonsControllerTest : TestPropertyProvider {
             assert(this.cpf == person.cpf)
             assert(this.address == person.address)
         }
-        assert(micronautDataRepository.findAll().count() == 1)
     }
 
     @Test
@@ -191,7 +188,6 @@ internal class PersonsControllerTest : TestPropertyProvider {
                 }
             }
         }
-        assert(micronautDataRepository.findAll().count() == 1)
     }
 
     @ParameterizedTest
@@ -213,7 +209,6 @@ internal class PersonsControllerTest : TestPropertyProvider {
                 }
             }
         }
-        assert(micronautDataRepository.findAll().none())
     }
 
     @ParameterizedTest
@@ -235,7 +230,6 @@ internal class PersonsControllerTest : TestPropertyProvider {
                 }
             }
         }
-        assert(micronautDataRepository.findAll().none())
     }
 
     @ParameterizedTest
@@ -258,7 +252,300 @@ internal class PersonsControllerTest : TestPropertyProvider {
                 }
             }
         }
-        assert(micronautDataRepository.findAll().none())
+    }
+
+    @Test
+    fun `update must return no content when successful`() {
+        val newName = "New name"
+        val personToCreate = getPerson()
+        createPerson(personToCreate)
+        val person = micronautDataRepository.findByCpf(personToCreate.cpf)!!
+        val request = UpdatePersonRequest(
+            id = person.id.toString(),
+            name = newName,
+            cpf = person.cpf,
+            address = person.address,
+            createdAt = person.createdAt,
+            updatedAt = person.updatedAt
+        )
+
+        client.toBlocking()
+            .exchange<UpdatePersonRequest, String>(
+                HttpRequest.PUT("/persons", request)
+            ).also {
+                assert(HttpStatus.NO_CONTENT == it.status)
+            }
+
+        val updatedPerson = client.toBlocking().exchange<Unit, FindPersonByCpfResponse>(
+            HttpRequest.GET("/persons/cpf/${person.cpf}"), FindPersonByCpfResponse::class.java
+        ).body.get()
+
+        assert(updatedPerson.name == newName)
+        assert(updatedPerson.cpf == person.cpf)
+        assert(updatedPerson.address == person.address)
+    }
+
+    @Test
+    fun `update must return bad request when cpf is changed`() {
+        val personToCreate = getPerson()
+        createPerson(personToCreate)
+        val person = micronautDataRepository.findByCpf(personToCreate.cpf)!!
+        val request = UpdatePersonRequest(
+            id = person.id.toString(),
+            name = person.name,
+            cpf = "526.815.140-10",
+            address = person.address,
+            createdAt = person.createdAt,
+            updatedAt = person.updatedAt
+        )
+
+        client.toBlocking().run {
+            assertThrows<HttpClientResponseException> {
+                exchange<UpdatePersonRequest, String>(
+                    HttpRequest.PUT("/persons", request)
+                ).also {
+                    assert(HttpStatus.BAD_REQUEST == it.status)
+                }
+            }
+        }
+
+
+        val updatedPerson = client.toBlocking().exchange<Unit, FindPersonByCpfResponse>(
+            HttpRequest.GET("/persons/cpf/${person.cpf}"), FindPersonByCpfResponse::class.java
+        ).body.get()
+
+        assert(updatedPerson.name == person.name)
+        assert(updatedPerson.cpf == person.cpf)
+        assert(updatedPerson.address == person.address)
+        assert(updatedPerson.createdAt == person.createdAt)
+        assert(updatedPerson.updatedAt == person.updatedAt)
+    }
+
+    @ParameterizedTest
+    @NullSource
+    @EmptySource
+    @ValueSource(strings = ["111.111.111-11"])
+    fun `update must return bad request when cpf is null or blank`(cpf: String?) {
+        val personToCreate = getPerson()
+        createPerson(personToCreate)
+        val person = micronautDataRepository.findByCpf(personToCreate.cpf)!!
+        val request = UpdatePersonRequest(
+            id = person.id.toString(),
+            name = person.name,
+            cpf = cpf,
+            address = person.address,
+            createdAt = person.createdAt,
+            updatedAt = person.updatedAt
+        )
+
+        client.toBlocking().run {
+            assertThrows<HttpClientResponseException> {
+                exchange<UpdatePersonRequest, String>(
+                    HttpRequest.PUT("/persons", request)
+                ).also {
+                    assert(HttpStatus.BAD_REQUEST == it.status)
+                }
+            }
+        }
+
+
+        val updatedPerson = client.toBlocking().exchange<Unit, FindPersonByCpfResponse>(
+            HttpRequest.GET("/persons/cpf/${person.cpf}"), FindPersonByCpfResponse::class.java
+        ).body.get()
+
+        assert(updatedPerson.name == person.name)
+        assert(updatedPerson.cpf == person.cpf)
+        assert(updatedPerson.address == person.address)
+        assert(updatedPerson.createdAt == person.createdAt)
+        assert(updatedPerson.updatedAt == person.updatedAt)
+    }
+
+    @ParameterizedTest
+    @NullSource
+    @EmptySource
+    fun `update must return bad request when name is null or blank`(name: String?) {
+        val personToCreate = getPerson()
+        createPerson(personToCreate)
+        val person = micronautDataRepository.findByCpf(personToCreate.cpf)!!
+        val request = UpdatePersonRequest(
+            id = person.id.toString(),
+            name = name,
+            cpf = person.cpf,
+            address = person.address,
+            createdAt = person.createdAt,
+            updatedAt = person.updatedAt
+        )
+
+        client.toBlocking().run {
+            assertThrows<HttpClientResponseException> {
+                exchange<UpdatePersonRequest, String>(
+                    HttpRequest.PUT("/persons", request)
+                ).also {
+                    assert(HttpStatus.BAD_REQUEST == it.status)
+                }
+            }
+        }
+
+
+        val updatedPerson = client.toBlocking().exchange<Unit, FindPersonByCpfResponse>(
+            HttpRequest.GET("/persons/cpf/${person.cpf}"), FindPersonByCpfResponse::class.java
+        ).body.get()
+
+        assert(updatedPerson.name == person.name)
+        assert(updatedPerson.cpf == person.cpf)
+        assert(updatedPerson.address == person.address)
+        assert(updatedPerson.createdAt == person.createdAt)
+        assert(updatedPerson.updatedAt == person.updatedAt)
+    }
+
+    @ParameterizedTest
+    @NullSource
+    @EmptySource
+    fun `update must return bad request when address is null or blank`(address: String?) {
+        val personToCreate = getPerson()
+        createPerson(personToCreate)
+        val person = micronautDataRepository.findByCpf(personToCreate.cpf)!!
+        val request = UpdatePersonRequest(
+            id = person.id.toString(),
+            name = person.name,
+            cpf = person.cpf,
+            address = address,
+            createdAt = person.createdAt,
+            updatedAt = person.updatedAt
+        )
+
+        client.toBlocking().run {
+            assertThrows<HttpClientResponseException> {
+                exchange<UpdatePersonRequest, String>(
+                    HttpRequest.PUT("/persons", request)
+                ).also {
+                    assert(HttpStatus.BAD_REQUEST == it.status)
+                }
+            }
+        }
+
+
+        val updatedPerson = client.toBlocking().exchange<Unit, FindPersonByCpfResponse>(
+            HttpRequest.GET("/persons/cpf/${person.cpf}"), FindPersonByCpfResponse::class.java
+        ).body.get()
+
+        assert(updatedPerson.name == person.name)
+        assert(updatedPerson.cpf == person.cpf)
+        assert(updatedPerson.address == person.address)
+        assert(updatedPerson.createdAt == person.createdAt)
+        assert(updatedPerson.updatedAt == person.updatedAt)
+    }
+
+    @ParameterizedTest
+    @NullSource
+    fun `update must return bad request when createdAt is null`(createdAt: LocalDate?) {
+        val personToCreate = getPerson()
+        createPerson(personToCreate)
+        val person = micronautDataRepository.findByCpf(personToCreate.cpf)!!
+        val request = UpdatePersonRequest(
+            id = person.id.toString(),
+            name = person.name,
+            cpf = person.cpf,
+            address = person.address,
+            createdAt = createdAt,
+            updatedAt = person.updatedAt
+        )
+
+        client.toBlocking().run {
+            assertThrows<HttpClientResponseException> {
+                exchange<UpdatePersonRequest, String>(
+                    HttpRequest.PUT("/persons", request)
+                ).also {
+                    assert(HttpStatus.BAD_REQUEST == it.status)
+                }
+            }
+        }
+
+
+        val updatedPerson = client.toBlocking().exchange<Unit, FindPersonByCpfResponse>(
+            HttpRequest.GET("/persons/cpf/${person.cpf}"), FindPersonByCpfResponse::class.java
+        ).body.get()
+
+        assert(updatedPerson.name == person.name)
+        assert(updatedPerson.cpf == person.cpf)
+        assert(updatedPerson.address == person.address)
+        assert(updatedPerson.createdAt == person.createdAt)
+        assert(updatedPerson.updatedAt == person.updatedAt)
+    }
+
+    @ParameterizedTest
+    @NullSource
+    fun `update must return bad request when updatedAt is null`(updatedAt: LocalDate?) {
+        val personToCreate = getPerson()
+        createPerson(personToCreate)
+        val person = micronautDataRepository.findByCpf(personToCreate.cpf)!!
+        val request = UpdatePersonRequest(
+            id = person.id.toString(),
+            name = person.name,
+            cpf = person.cpf,
+            address = person.address,
+            createdAt = person.createdAt,
+            updatedAt = updatedAt
+        )
+
+        client.toBlocking().run {
+            assertThrows<HttpClientResponseException> {
+                exchange<UpdatePersonRequest, String>(
+                    HttpRequest.PUT("/persons", request)
+                ).also {
+                    assert(HttpStatus.BAD_REQUEST == it.status)
+                }
+            }
+        }
+
+
+        val updatedPerson = client.toBlocking().exchange<Unit, FindPersonByCpfResponse>(
+            HttpRequest.GET("/persons/cpf/${person.cpf}"), FindPersonByCpfResponse::class.java
+        ).body.get()
+
+        assert(updatedPerson.name == person.name)
+        assert(updatedPerson.cpf == person.cpf)
+        assert(updatedPerson.address == person.address)
+        assert(updatedPerson.createdAt == person.createdAt)
+        assert(updatedPerson.updatedAt == person.updatedAt)
+    }
+
+    @ParameterizedTest
+    @NullSource
+    @EmptySource
+    fun `update must return bad request when id is null or blank`(id: String?) {
+        val personToCreate = getPerson()
+        createPerson(personToCreate)
+        val person = micronautDataRepository.findByCpf(personToCreate.cpf)!!
+        val request = UpdatePersonRequest(
+            id = id,
+            name = person.name,
+            cpf = person.cpf,
+            address = person.address,
+            createdAt = person.createdAt,
+            updatedAt = person.updatedAt
+        )
+
+        client.toBlocking().run {
+            assertThrows<HttpClientResponseException> {
+                exchange<UpdatePersonRequest, String>(
+                    HttpRequest.PUT("/persons", request)
+                ).also {
+                    assert(HttpStatus.BAD_REQUEST == it.status)
+                }
+            }
+        }
+
+
+        val updatedPerson = client.toBlocking().exchange<Unit, FindPersonByCpfResponse>(
+            HttpRequest.GET("/persons/cpf/${person.cpf}"), FindPersonByCpfResponse::class.java
+        ).body.get()
+
+        assert(updatedPerson.name == person.name)
+        assert(updatedPerson.cpf == person.cpf)
+        assert(updatedPerson.address == person.address)
+        assert(updatedPerson.createdAt == person.createdAt)
+        assert(updatedPerson.updatedAt == person.updatedAt)
     }
 
     private fun getSavedPersonId(person: Person) = micronautDataRepository.findByCpf(person.cpf)!!.id.toString()
@@ -285,6 +572,4 @@ internal class PersonsControllerTest : TestPropertyProvider {
     override fun getProperties(): MutableMap<String, String> {
         return Collections.singletonMap("mongodb.uri", mongoDBContainer.replicaSetUrl)
     }
-
-
 }

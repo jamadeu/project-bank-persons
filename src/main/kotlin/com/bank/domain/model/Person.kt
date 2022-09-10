@@ -7,10 +7,12 @@ import java.time.LocalDate
 
 @MappedEntity
 data class Person(
+
     val name: String,
     val cpf: String,
     val address: String,
 ) {
+
     @Id
     @GeneratedValue
     var id: ObjectId? = null
