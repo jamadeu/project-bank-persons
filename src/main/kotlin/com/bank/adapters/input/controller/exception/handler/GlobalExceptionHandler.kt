@@ -1,9 +1,9 @@
-package com.bank.adapters.controller.exception.handler
+package com.bank.adapters.input.controller.exception.handler
 
-import com.bank.domain.exception.CpfCannotBeChangedException
-import com.bank.domain.exception.InvalidCpfException
-import com.bank.domain.exception.PersonAlreadyExistsException
-import com.bank.domain.exception.PersonNotFoundException
+import com.bank.application.exception.CpfCannotBeChangedException
+import com.bank.application.exception.InvalidCpfException
+import com.bank.application.exception.PersonAlreadyExistsException
+import com.bank.application.exception.PersonNotFoundException
 import io.micronaut.http.HttpRequest
 import io.micronaut.http.HttpResponse
 import io.micronaut.http.server.exceptions.ExceptionHandler

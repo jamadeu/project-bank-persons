@@ -1,10 +1,10 @@
-package com.bank.adapters.controller
+package com.bank.adapters.input.controller
 
-import com.bank.adapters.controller.dto.CreatePersonRequest
-import com.bank.adapters.controller.dto.FindPersonByCpfResponse
-import com.bank.adapters.controller.dto.FindPersonByIdResponse
-import com.bank.adapters.controller.dto.UpdatePersonRequest
-import com.bank.domain.service.PersonService
+import com.bank.adapters.input.controller.dto.CreatePersonRequest
+import com.bank.adapters.input.controller.dto.FindPersonByCpfResponse
+import com.bank.adapters.input.controller.dto.FindPersonByIdResponse
+import com.bank.adapters.input.controller.dto.UpdatePersonRequest
+import com.bank.application.service.PersonService
 import io.micronaut.http.HttpResponse
 import io.micronaut.http.annotation.*
 import io.micronaut.validation.Validated

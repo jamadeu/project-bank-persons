@@ -1,10 +1,10 @@
 package com.bank.adapters.controller
 
-import com.bank.adapters.controller.dto.CreatePersonRequest
-import com.bank.adapters.controller.dto.FindPersonByCpfResponse
-import com.bank.adapters.controller.dto.FindPersonByIdResponse
-import com.bank.adapters.controller.dto.UpdatePersonRequest
-import com.bank.adapters.repository.MicronautDataRepository
+import com.bank.adapters.input.controller.dto.CreatePersonRequest
+import com.bank.adapters.input.controller.dto.FindPersonByCpfResponse
+import com.bank.adapters.input.controller.dto.FindPersonByIdResponse
+import com.bank.adapters.input.controller.dto.UpdatePersonRequest
+import com.bank.adapters.output.repository.MicronautDataRepository
 import com.bank.domain.model.Person
 import io.micronaut.http.HttpRequest
 import io.micronaut.http.HttpStatus

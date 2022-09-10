@@ -1,10 +1,10 @@
-package com.bank.adapters.controller.dto
+package com.bank.adapters.input.controller.dto
 
 import com.bank.domain.model.Person
 import com.fasterxml.jackson.annotation.JsonFormat
 import java.time.LocalDate
 
-data class FindPersonByIdResponse(
+data class FindPersonByCpfResponse(
     var id: String,
     var name: String,
     var cpf: String,
@@ -15,8 +15,8 @@ data class FindPersonByIdResponse(
     var updatedAt: LocalDate,
 ) {
     companion object {
-        fun fromEntity(person: Person): FindPersonByIdResponse =
-            FindPersonByIdResponse(
+        fun fromEntity(person: Person): FindPersonByCpfResponse =
+            FindPersonByCpfResponse(
                 id = person.id!!.toHexString(),
                 name = person.name,
                 cpf = person.cpf,

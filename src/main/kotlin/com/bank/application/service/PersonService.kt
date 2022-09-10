@@ -1,27 +1,26 @@
 package com.bank.application.service
 
-import com.bank.domain.exception.CpfCannotBeChangedException
-import com.bank.domain.exception.InvalidCpfException
-import com.bank.domain.exception.PersonAlreadyExistsException
-import com.bank.domain.exception.PersonNotFoundException
+import com.bank.application.exception.CpfCannotBeChangedException
+import com.bank.application.exception.InvalidCpfException
+import com.bank.application.exception.PersonAlreadyExistsException
+import com.bank.application.exception.PersonNotFoundException
 import com.bank.domain.model.Person
 import com.bank.domain.repository.PersonRepository
-import com.bank.domain.service.PersonService
 import io.micronaut.http.annotation.Produces
 import jakarta.inject.Singleton
 import org.slf4j.LoggerFactory
 
 @Produces
 @Singleton
-class PersonServiceImpl(private val personRepository: PersonRepository) : PersonService {
+class PersonService(private val personRepository: PersonRepository) {
 
     private val logger = LoggerFactory.getLogger(javaClass)
-    override fun findById(id: String): Person {
+    fun findById(id: String): Person {
         logger.info("PersonServiceImpl - findById")
         return personRepository.findById(id) ?: throw PersonNotFoundException("Person with id $id not found")
     }
 
-    override fun findByCpf(cpf: String): Person {
+    fun findByCpf(cpf: String): Person {
         logger.info("PersonServiceImpl - findByCpf")
         if (!isCPF(cpf)) {
             logger.error("PersonServiceImpl - save, invalid cpf - $cpf")
@@ -30,15 +29,15 @@ class PersonServiceImpl(private val personRepository: PersonRepository) : Person
         return personRepository.findByCpf(cpf) ?: throw PersonNotFoundException("Person with cpf $cpf not found")
     }
 
-    override fun create(person: Person): Person {
+    fun create(person: Person): Person {
         logger.info("PersonServiceImpl - save, person $person")
         if (!isCPF(person.cpf)) {
             logger.error("PersonServiceImpl - save, invalid cpf - ${person.cpf}")
             throw InvalidCpfException("Cpf is invalid")
         }
         personRepository.findByCpf(person.cpf)
-            .also { person ->
-                if (person != null) {
+            .also {
+                if (it != null) {
                     logger.error("PersonServiceImpl - Person with cpf ${person.cpf} already exists")
                     throw PersonAlreadyExistsException("Person with cpf ${person.cpf} already exists")
                 }
@@ -46,10 +45,10 @@ class PersonServiceImpl(private val personRepository: PersonRepository) : Person
         return personRepository.save(person)
     }
 
-    override fun update(person: Person): Person {
+    fun update(person: Person): Person {
         logger.info("PersonServiceImpl - update, person $person")
         this.findById(person.id.toString()).also { p ->
-            if (p.cpf != person.cpf){
+            if (p.cpf != person.cpf) {
                 logger.error("PersonServiceImpl - update, cpf cannot be changed")
                 throw CpfCannotBeChangedException("Cpf cannot be changed")
             }
@@ -57,7 +56,7 @@ class PersonServiceImpl(private val personRepository: PersonRepository) : Person
         return personRepository.update(person)
     }
 
-    override fun deleteById(id: String) {
+    fun deleteById(id: String) {
         personRepository.deleteById(id)
     }
 

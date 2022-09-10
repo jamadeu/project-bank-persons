@@ -1,4 +1,4 @@
-package com.bank.adapters.repository
+package com.bank.adapters.output.repository
 
 import com.bank.domain.model.Person
 import com.bank.domain.repository.PersonRepository

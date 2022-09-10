@@ -1,4 +1,4 @@
-package com.bank.adapters.controller.dto
+package com.bank.adapters.input.controller.dto
 
 import com.bank.domain.model.Person
 import com.fasterxml.jackson.annotation.JsonFormat
